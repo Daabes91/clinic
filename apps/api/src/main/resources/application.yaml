@@ -1,0 +1,64 @@
+spring:
+  config:
+    import: optional:file:.env.local
+  application:
+    name: clinic-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+
+
+security:
+  jwt:
+    patient:
+      issuer: ${JWT_PATIENT_ISSUER:https://api.example-clinic.com}
+      audience: ${JWT_PATIENT_AUDIENCE:patient}
+      public-key: ${JWT_PATIENT_PUBLIC_KEY:-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApMockKeyExample\n-----END PUBLIC KEY-----}
+      clock-skew: PT30S
+    staff:
+      issuer: ${JWT_STAFF_ISSUER:https://api.example-clinic.com}
+      audience: ${JWT_STAFF_AUDIENCE:staff}
+      public-key: ${JWT_STAFF_PUBLIC_KEY:-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApMockKeyExample\n-----END PUBLIC KEY-----}
+      clock-skew: PT30S
+    refresh:
+      ttl: PT30M
+  cors:
+    public-origins:
+      - ${PUBLIC_APP_ORIGIN:http://localhost:3000}
+    admin-origins:
+      - ${ADMIN_APP_ORIGIN:http://localhost:3001}
+  rate-limiting:
+    public-auth:
+      capacity: ${RATE_LIMIT_PUBLIC_AUTH_CAPACITY:5}
+      refill-period: ${RATE_LIMIT_PUBLIC_AUTH_PERIOD:PT1M}
+    public-booking:
+      capacity: ${RATE_LIMIT_PUBLIC_BOOK_CAPACITY:10}
+      refill-period: ${RATE_LIMIT_PUBLIC_BOOK_PERIOD:PT1M}
+    admin-auth:
+      capacity: ${RATE_LIMIT_ADMIN_AUTH_CAPACITY:5}
+      refill-period: ${RATE_LIMIT_ADMIN_AUTH_PERIOD:PT1M}
+  admin:
+    ip-allowlist:
+      - ${ADMIN_IP_ALLOWLIST_PRIMARY:127.0.0.1/32}
+      - ${ADMIN_IP_ALLOWLIST_SECONDARY:'::1/128'}
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
