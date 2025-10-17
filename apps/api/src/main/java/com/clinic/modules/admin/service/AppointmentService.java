@@ -4,6 +4,7 @@ import com.clinic.modules.admin.dto.AppointmentAdminDetailResponse;
 import com.clinic.modules.admin.dto.AppointmentAdminUpsertRequest;
 import com.clinic.modules.admin.dto.AppointmentResponse;
 import com.clinic.modules.core.appointment.AppointmentEntity;
+import com.clinic.modules.core.appointment.AppointmentMode;
 import com.clinic.modules.core.appointment.AppointmentRepository;
 import com.clinic.modules.core.appointment.AppointmentStatus;
 import com.clinic.modules.core.doctor.DoctorEntity;
@@ -12,6 +13,9 @@ import com.clinic.modules.core.patient.PatientEntity;
 import com.clinic.modules.core.patient.PatientRepository;
 import com.clinic.modules.core.service.ClinicServiceEntity;
 import com.clinic.modules.core.service.ClinicServiceRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,20 +49,46 @@ public class AppointmentService {
     }
 
     @Transactional(readOnly = true)
-    public List<AppointmentResponse> fetchAppointments(String filter, ZoneId zoneId) {
+    public Page<AppointmentResponse> fetchAppointments(String filter, Long doctorId, Long patientId, ZoneId zoneId, Pageable pageable) {
+        List<AppointmentEntity> allAppointments;
+
         if ("upcoming".equalsIgnoreCase(filter)) {
             Instant now = Instant.now();
-            return appointmentRepository.findUpcomingAfter(now).stream()
-                    .limit(20)
-                    .map(entity -> toDto(entity, zoneId))
+            allAppointments = appointmentRepository.findUpcomingAfter(now);
+        } else {
+            Instant start = Instant.now();
+            Instant end = start.plusSeconds(7 * 24 * 60 * 60);
+            allAppointments = appointmentRepository.findByScheduledBetween(start, end);
+        }
+
+        // Apply doctor filter if provided
+        if (doctorId != null) {
+            allAppointments = allAppointments.stream()
+                    .filter(appointment -> appointment.getDoctor() != null && appointment.getDoctor().getId().equals(doctorId))
                     .toList();
         }
 
-        Instant start = Instant.now();
-        Instant end = start.plusSeconds(7 * 24 * 60 * 60);
-        return appointmentRepository.findByScheduledBetween(start, end).stream()
+        // Apply patient filter if provided
+        if (patientId != null) {
+            allAppointments = allAppointments.stream()
+                    .filter(appointment -> appointment.getPatient() != null && appointment.getPatient().getId().equals(patientId))
+                    .toList();
+        }
+
+        // Convert to DTOs
+        List<AppointmentResponse> allDtos = allAppointments.stream()
                 .map(entity -> toDto(entity, zoneId))
                 .toList();
+
+        // Apply pagination manually
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), allDtos.size());
+
+        List<AppointmentResponse> pageContent = start >= allDtos.size()
+            ? List.of()
+            : allDtos.subList(start, end);
+
+        return new PageImpl<>(pageContent, pageable, allDtos.size());
     }
 
     private AppointmentResponse toDto(AppointmentEntity entity, ZoneId zoneId) {
@@ -78,7 +108,8 @@ public class AppointmentService {
                 doctorName,
                 serviceName,
                 scheduledAt,
-                entity.getStatus().name()
+                entity.getStatus().name(),
+                entity.getBookingMode().name()
         );
     }
 
@@ -98,12 +129,15 @@ public class AppointmentService {
         Instant scheduledAt = parseScheduledAt(request.scheduledAt());
         ensureSlotAvailable(doctor.getId(), scheduledAt, null);
 
+        AppointmentMode bookingMode = parseBookingMode(request.bookingMode());
+
         AppointmentEntity appointment = new AppointmentEntity(
                 patient,
                 doctor,
                 service,
                 scheduledAt,
                 AppointmentStatus.SCHEDULED,
+                bookingMode,
                 normalize(request.notes())
         );
 
@@ -123,11 +157,14 @@ public class AppointmentService {
         Instant scheduledAt = parseScheduledAt(request.scheduledAt());
         ensureSlotAvailable(doctor.getId(), scheduledAt, appointment.getId());
 
+        AppointmentMode bookingMode = parseBookingMode(request.bookingMode());
+
         appointment.updateDetails(
                 patient,
                 doctor,
                 service,
                 scheduledAt,
+                bookingMode,
                 normalize(request.notes())
         );
 
@@ -156,6 +193,7 @@ public class AppointmentService {
                     appointment.getDoctor(),
                     appointment.getService(),
                     appointment.getScheduledAt(),
+                    appointment.getBookingMode(),
                     normalize(notes)
             );
         }
@@ -175,6 +213,7 @@ public class AppointmentService {
                     appointment.getDoctor(),
                     appointment.getService(),
                     appointment.getScheduledAt(),
+                    appointment.getBookingMode(),
                     normalize(notes)
             );
         }
@@ -271,6 +310,7 @@ public class AppointmentService {
                 doctorRef,
                 serviceRef,
                 entity.getStatus().name(),
+                entity.getBookingMode().name(),
                 scheduled,
                 created,
                 entity.getNotes()
@@ -283,5 +323,13 @@ public class AppointmentService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private AppointmentMode parseBookingMode(String input) {
+        try {
+            return AppointmentMode.from(input);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
+        }
     }
 }

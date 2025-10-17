@@ -1,0 +1,172 @@
+/* Ensure form text stays legible across themes */
+input,
+textarea,
+select,
+input.form-input,
+textarea.form-textarea,
+select.form-select {
+  color: #0f172a !important;
+}
+
+select[multiple] option {
+  color: #0f172a !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(100, 116, 139, 0.8) !important;
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  color: rgba(100, 116, 139, 0.8) !important;
+}
+
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Override dark mode text colors for inputs */
+.dark input,
+.dark textarea,
+.dark select {
+  color: #0f172a !important;
+}
+
+/* Enhanced Notification Animations */
+@keyframes notification-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes notification-slide-out {
+  from {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%) scale(0.95);
+    opacity: 0;
+  }
+}
+
+@keyframes notification-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* Notification wrapper enhancements */
+.notification-wrapper {
+  animation: notification-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.notification-wrapper.notification-exit {
+  animation: notification-slide-out 0.3s cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Hover effects for notifications */
+.notification-wrapper:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease-out;
+}
+
+/* Progress bar animation */
+@keyframes progress-bar {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+/* Notification icon pulse for important messages */
+@keyframes icon-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+.notification-icon-pulse {
+  animation: icon-pulse 2s ease-in-out infinite;
+}
+
+/* Color-specific border accents */
+.notification-success {
+  border-left: 4px solid #16a34a;
+}
+
+.notification-error {
+  border-left: 4px solid #dc2626;
+}
+
+.notification-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.notification-info {
+  border-left: 4px solid #3b82f6;
+}
+
+/* Enhanced shadow on hover */
+.notification-wrapper:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.3s ease-out, transform 0.2s ease-out;
+}
+
+/* Stacking effect for multiple notifications */
+.notification-wrapper + .notification-wrapper {
+  margin-top: 1rem;
+}
+
+/* Smooth scrollbar for notification container */
+.notifications-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notifications-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notifications-container::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 3px;
+}
+
+.notifications-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Page Transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}

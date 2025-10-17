@@ -26,6 +26,7 @@ export function useAdminApi() {
     retry = true
   ): Promise<T> => {
     try {
+      // Always get fresh authorization header at request time
       const response = await $fetch<ApiResponseEnvelope<T>>(path, {
         baseURL,
         credentials: "include",
@@ -51,10 +52,14 @@ export function useAdminApi() {
     } catch (error: any) {
       if (retry && error?.status === 401) {
         try {
+          // Refresh tokens - this will update the auth state
           await auth.refresh();
+          // Retry the request - it will get the NEW token from authorizationHeader()
           return await authorizedRequest<T>(path, options, false);
-        } catch {
+        } catch (refreshError) {
+          // If refresh fails, logout and redirect
           await auth.logout();
+          throw refreshError;
         }
       }
       throw error;

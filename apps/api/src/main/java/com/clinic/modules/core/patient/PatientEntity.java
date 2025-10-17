@@ -29,6 +29,12 @@ public class PatientEntity {
     @Column(length = 32)
     private String phone;
 
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
+
+    @Column(name = "last_login_at")
+    private Instant lastLoginAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -70,6 +76,22 @@ public class PatientEntity {
 
     public String getPhone() {
         return phone;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public Instant getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public void markLogin() {
+        this.lastLoginAt = Instant.now();
     }
 
     public Instant getCreatedAt() {

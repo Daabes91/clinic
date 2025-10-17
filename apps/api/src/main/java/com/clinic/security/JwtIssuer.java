@@ -3,6 +3,7 @@ package com.clinic.security;
 import com.clinic.config.SecurityProperties;
 import com.clinic.modules.admin.staff.model.StaffRole;
 import com.clinic.modules.admin.staff.model.StaffUser;
+import com.clinic.modules.core.patient.PatientEntity;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -24,26 +25,15 @@ import java.util.List;
 public class JwtIssuer {
 
     private final SecurityProperties securityProperties;
-    private final RSAKey staffKey;
     private final RSASSASigner staffSigner;
+    private final RSASSASigner patientSigner;
     private final Environment environment;
 
     public JwtIssuer(SecurityProperties securityProperties, Environment environment) {
         this.securityProperties = securityProperties;
         this.environment = environment;
-        String staffPem = securityProperties.jwt().staff().privateKey();
-        if (!StringUtils.hasText(staffPem)) {
-            staffPem = environment.getProperty("JWT_STAFF_PRIVATE_KEY");
-        }
-        if (!StringUtils.hasText(staffPem)) {
-            staffPem = "classpath:keys/staff_private.pem";
-        }
-        this.staffKey = parseRsaKey(staffPem, "staff");
-        try {
-            this.staffSigner = new RSASSASigner(staffKey);
-        } catch (JOSEException e) {
-            throw new IllegalStateException("Unable to initialize staff JWT signer", e);
-        }
+        this.staffSigner = createSigner(securityProperties.jwt().staff(), "JWT_STAFF_PRIVATE_KEY", "staff", "classpath:keys/staff_private.pem");
+        this.patientSigner = createSigner(securityProperties.jwt().patient(), "JWT_PATIENT_PRIVATE_KEY", "patient", "classpath:keys/staff_private.pem");
     }
 
     public IssuedToken issueStaffAccessToken(StaffUser user) {
@@ -64,6 +54,31 @@ public class JwtIssuer {
                 .claim("roles", List.of(roleToAuthority(user.getRole())))
                 .build();
 
+        return signToken(claims, staffSigner, "staff");
+    }
+
+    public IssuedToken issuePatientAccessToken(PatientEntity patient) {
+        var tokenConfig = securityProperties.jwt().patient();
+        String issuer = resolve(tokenConfig.issuer(), "JWT_PATIENT_ISSUER", "https://api.example-clinic.com");
+        String audience = resolve(tokenConfig.audience(), "JWT_PATIENT_AUDIENCE", "patient");
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        Instant expiresAt = now.plus(tokenConfig.accessTtl());
+
+        var claims = new JWTClaimsSet.Builder()
+                .subject(String.valueOf(patient.getId()))
+                .issuer(issuer)
+                .audience(audience)
+                .issueTime(java.util.Date.from(now))
+                .expirationTime(java.util.Date.from(expiresAt))
+                .claim("email", patient.getEmail())
+                .claim("name", (patient.getFirstName() + " " + patient.getLastName()).trim())
+                .claim("roles", List.of("ROLE_PATIENT"))
+                .build();
+
+        return signToken(claims, patientSigner, "patient");
+    }
+
+    private IssuedToken signToken(JWTClaimsSet claims, RSASSASigner signer, String label) {
         try {
             SignedJWT signedJWT = new SignedJWT(
                     new JWSHeader.Builder(JWSAlgorithm.RS256)
@@ -71,10 +86,30 @@ public class JwtIssuer {
                             .build(),
                     claims
             );
-            signedJWT.sign(staffSigner);
+            signedJWT.sign(signer);
+            Instant expiresAt = claims.getExpirationTime().toInstant();
             return new IssuedToken(signedJWT.serialize(), expiresAt);
         } catch (JOSEException ex) {
-            throw new IllegalStateException("Unable to sign staff JWT", ex);
+            throw new IllegalStateException("Unable to sign " + label + " JWT", ex);
+        }
+    }
+
+    private RSASSASigner createSigner(SecurityProperties.Token tokenConfig,
+                                      String envKey,
+                                      String label,
+                                      String defaultResource) {
+        String pem = tokenConfig.privateKey();
+        if (!StringUtils.hasText(pem)) {
+            pem = environment.getProperty(envKey);
+        }
+        if (!StringUtils.hasText(pem)) {
+            pem = defaultResource;
+        }
+        RSAKey key = parseRsaKey(pem, label);
+        try {
+            return new RSASSASigner(key);
+        } catch (JOSEException e) {
+            throw new IllegalStateException("Unable to initialize " + label + " JWT signer", e);
         }
     }
 

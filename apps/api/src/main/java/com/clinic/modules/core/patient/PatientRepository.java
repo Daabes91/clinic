@@ -9,5 +9,7 @@ public interface PatientRepository extends JpaRepository<PatientEntity, Long> {
 
     Optional<PatientEntity> findByEmailIgnoreCase(String email);
 
+    boolean existsByEmailIgnoreCase(String email);
+
     long countByCreatedAtAfter(Instant threshold);
 }

@@ -8,6 +8,10 @@ import com.clinic.modules.admin.dto.AppointmentDecisionRequest;
 import com.clinic.modules.admin.dto.AppointmentResponse;
 import com.clinic.modules.admin.service.AppointmentService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,15 +31,40 @@ public class AppointmentAdminController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AppointmentResponse>>> listAppointments(
-            @RequestParam(name = "filter", required = false) String filter) {
-        List<AppointmentResponse> appointments = appointmentService.fetchAppointments(filter, ZoneId.systemDefault());
+    public ResponseEntity<ApiResponse<Page<AppointmentResponse>>> listAppointments(
+            @RequestParam(name = "filter", required = false) String filter,
+            @RequestParam(name = "doctorId", required = false) Long doctorId,
+            @RequestParam(name = "patientId", required = false) Long patientId,
+            @RequestParam(name = "page", required = false, defaultValue = "0") int page,
+            @RequestParam(name = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(name = "sort", required = false, defaultValue = "scheduledAt") String sortBy,
+            @RequestParam(name = "direction", required = false, defaultValue = "ASC") String direction) {
+
+        // Create pageable with sorting
+        Sort.Direction sortDirection = "DESC".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+
+        Page<AppointmentResponse> appointments = appointmentService.fetchAppointments(
+            filter,
+            doctorId,
+            patientId,
+            ZoneId.systemDefault(),
+            pageable
+        );
         return ResponseEntity.ok(
                 ApiResponseFactory.success(
                         "APPOINTMENTS_LISTED",
                         "Appointments fetched successfully.",
                         appointments,
-                        Map.of("count", appointments.size(), "filter", filter == null ? "default" : filter),
+                        Map.of(
+                            "totalElements", appointments.getTotalElements(),
+                            "totalPages", appointments.getTotalPages(),
+                            "currentPage", appointments.getNumber(),
+                            "pageSize", appointments.getSize(),
+                            "filter", filter == null ? "default" : filter,
+                            "doctorId", doctorId != null ? doctorId : "all",
+                            "patientId", patientId != null ? patientId : "all"
+                        ),
                         null
                 )
         );

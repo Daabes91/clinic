@@ -8,6 +8,7 @@ public record AppointmentResponse(
         String doctorName,
         String serviceName,
         OffsetDateTime scheduledAt,
-        String status
+        String status,
+        String bookingMode
 ) {
 }

@@ -6,6 +6,7 @@ public record AppointmentAdminDetailResponse(
         Reference doctor,
         Reference service,
         String status,
+        String bookingMode,
         String scheduledAt,
         String createdAt,
         String notes

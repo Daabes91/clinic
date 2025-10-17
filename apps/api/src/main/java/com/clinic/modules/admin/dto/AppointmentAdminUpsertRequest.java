@@ -8,6 +8,7 @@ public record AppointmentAdminUpsertRequest(
         @NotNull Long doctorId,
         @NotNull Long serviceId,
         @NotBlank String scheduledAt,
+        @NotBlank String bookingMode,
         String notes
 ) {
 }

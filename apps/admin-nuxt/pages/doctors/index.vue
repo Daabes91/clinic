@@ -1,164 +1,246 @@
 <template>
-  <div class="space-y-10">
-    <header class="flex flex-wrap items-end justify-between gap-6 rounded-4xl bg-gradient-to-br from-emerald-600 via-emerald-500 to-emerald-400 px-10 py-12 text-white shadow-2xl">
-      <div class="space-y-4">
-        <UBadge color="white" variant="soft" class="text-emerald-900">Operations</UBadge>
-        <div>
-          <h1 class="text-4xl font-semibold tracking-tight">Manage doctors</h1>
-          <p class="text-sm text-white/80">
-            Keep provider profiles current so patients can find the right expertise across the clinic.
-          </p>
-        </div>
-        <div class="grid gap-4 sm:grid-cols-3">
-          <MetricCard
-            title="Total doctors"
-            :metric="doctors.length.toString()"
-            change="Active"
-            description="Providers listed in the directory"
-          />
-          <MetricCard
-            title="Specialties"
-            :metric="uniqueSpecialties"
-            change="Represented"
-            description="Distinct areas of care"
-          />
-          <MetricCard
-            title="Languages"
-            :metric="uniqueLanguages"
-            change="Supported"
-            description="Patient-facing communication"
-          />
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <UButton variant="ghost" color="white" :loading="pending" @click="refresh">
-          Refresh
-        </UButton>
-        <UButton icon="i-lucide-user-plus" color="white" class="text-emerald-700" @click="openCreate">
-          Add doctor
-        </UButton>
-      </div>
-    </header>
+  <div class="space-y-6">
+    <!-- Hero Header -->
+    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-6 text-white shadow-lg">
+      <div class="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
+      <div class="absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-emerald-500/20 blur-2xl"></div>
 
-    <UCard class="shadow-card">
+      <div class="relative">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="space-y-2">
+            <UBadge color="white" variant="soft" size="sm" class="text-emerald-700">
+              <UIcon name="i-lucide-stethoscope" class="h-3 w-3" />
+              Operations
+            </UBadge>
+            <h1 class="text-2xl font-bold lg:text-3xl">Manage Doctors</h1>
+            <p class="text-sm text-emerald-100">
+              Keep provider profiles current so patients can find the right expertise
+            </p>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <UButton
+              variant="ghost"
+              color="white"
+              :loading="pending"
+              icon="i-lucide-refresh-cw"
+              size="sm"
+              @click="refresh"
+            >
+              Refresh
+            </UButton>
+            <UButton
+              icon="i-lucide-user-plus"
+              color="white"
+              size="md"
+              class="!text-emerald-700 shadow-md"
+              @click="openCreate"
+            >
+              <span class="text-emerald-700 font-medium">Add Doctor</span>
+            </UButton>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="mt-6 grid gap-3 sm:grid-cols-3">
+          <div class="rounded-lg bg-white/10 p-4 backdrop-blur-sm transition-all hover:bg-white/15">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-medium text-emerald-200">Total Doctors</p>
+                <p class="mt-1 text-2xl font-bold">{{ doctors.length }}</p>
+                <p class="mt-0.5 text-xs text-emerald-200">Active providers</p>
+              </div>
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+                <UIcon name="i-lucide-users" class="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-white/10 p-4 backdrop-blur-sm transition-all hover:bg-white/15">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-medium text-emerald-200">Specialties</p>
+                <p class="mt-1 text-2xl font-bold">{{ uniqueSpecialties }}</p>
+                <p class="mt-0.5 text-xs text-emerald-200">Areas of care</p>
+              </div>
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+                <UIcon name="i-lucide-award" class="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-white/10 p-4 backdrop-blur-sm transition-all hover:bg-white/15">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-medium text-emerald-200">Languages</p>
+                <p class="mt-1 text-2xl font-bold">{{ uniqueLanguages }}</p>
+                <p class="mt-0.5 text-xs text-emerald-200">Supported</p>
+              </div>
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+                <UIcon name="i-lucide-globe" class="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Doctors Directory -->
+    <UCard>
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p class="text-xs uppercase tracking-widest text-slate-400">Directory</p>
-            <h2 class="text-lg font-semibold text-slate-900">Published doctors</h2>
+          <div class="flex items-center gap-2.5">
+            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+              <UIcon name="i-lucide-users" class="h-4 w-4" />
+            </div>
+            <div>
+              <h2 class="text-base font-semibold text-slate-900">Doctors Directory</h2>
+              <p class="text-xs text-slate-500">All registered medical professionals</p>
+            </div>
           </div>
-          <UInput
-            v-model="search"
-            icon="i-lucide-search"
-            placeholder="Search doctors"
-            color="gray"
-            class="w-full max-w-xs"
-          />
+          <div class="w-full max-w-xs relative">
+            <input
+              type="text"
+              placeholder="Search services"
+              class="block w-full transition-all duration-200 border border-slate-300 focus:border-primary-500 placeholder:text-slate-400 disabled:bg-slate-50 disabled:cursor-not-allowed form-input rounded-lg placeholder-gray-400 dark:placeholder-gray-500 h-9 text-sm px-9 py-1.5 shadow-sm bg-white text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-primary-500"
+              v-model="search"
+            />
+            <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <span
+                class="iconify i-lucide:search flex-shrink-0 text-gray-400 dark:text-gray-500 h-5 w-5"
+                aria-hidden="true"
+              ></span>
+            </span>
+          </div>
         </div>
       </template>
 
-      <div v-if="pending && !doctors.length" class="space-y-4">
-        <USkeleton v-for="i in 5" :key="`doctor-skeleton-${i}`" class="h-12 rounded-2xl" />
+      <div v-if="pending && !doctors.length" class="space-y-2">
+        <USkeleton v-for="i in 5" :key="`skeleton-${i}`" class="h-20 rounded-lg" />
       </div>
 
-      <div v-else-if="!filteredRows.length" class="rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-16 text-center">
-        <div class="mx-auto max-w-md space-y-4">
-          <UAvatar icon="i-lucide-stethoscope" size="xl" class="mx-auto" color="gray" variant="soft" />
-          <h3 class="text-xl font-semibold text-slate-900">No doctors found</h3>
-          <p class="text-sm text-slate-500">
+      <div v-else-if="!filteredRows.length" class="py-12 text-center">
+        <div class="mx-auto max-w-md space-y-3">
+          <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+            <UIcon name="i-lucide-user-x" class="h-6 w-6 text-slate-400" />
+          </div>
+          <h3 class="text-lg font-semibold text-slate-900">No doctors found</h3>
+          <p class="text-xs text-slate-500">
             Add a new practitioner or adjust your search filters to see results.
           </p>
           <UButton icon="i-lucide-user-plus" color="emerald" variant="soft" @click="openCreate">
-            Create doctor
+            Create Doctor
           </UButton>
         </div>
       </div>
 
-      <UTable
-        v-else
-        :rows="filteredRows"
-        :columns="columns"
-        :loading="pending"
-        class="rounded-2xl"
-      >
-        <template #fullName-data="{ row }">
-          <div class="flex flex-col">
-            <span class="font-medium text-slate-900">{{ row.fullName }}</span>
-            <span v-if="row.specialty" class="text-xs text-slate-500">{{ row.specialty }}</span>
-          </div>
-        </template>
-        <template #locales-data="{ row }">
-          <div class="flex flex-wrap gap-2">
-            <UBadge v-for="code in row.locales" :key="code" color="emerald" variant="soft" class="uppercase">
-              {{ code }}
-            </UBadge>
-            <span v-if="!row.locales.length" class="text-xs text-slate-400">—</span>
-          </div>
-        </template>
-        <template #services-data="{ row }">
-          <div class="flex flex-wrap gap-2">
-            <UBadge
-              v-for="service in row.services"
-              :key="service.id"
-              color="gray"
-              variant="soft"
-              class="max-w-[150px] truncate bg-slate-100 text-slate-600"
-            >
-              {{ service.nameEn ?? service.slug }}
-            </UBadge>
-            <span v-if="!row.services.length" class="text-xs text-slate-400">—</span>
-          </div>
-        </template>
-        <template #createdAt-data="{ row }">
-          <span class="text-xs text-slate-500">{{ row.createdAt }}</span>
-        </template>
-        <template #actions-data="{ row }">
-          <div class="flex justify-end gap-2">
-            <UButton
-              icon="i-lucide-pencil"
-              variant="ghost"
-              color="gray"
-              size="xs"
-              class="hover:bg-emerald-50"
-              aria-label="Edit"
-              @click="openEdit(row)"
+      <div v-else class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div
+          v-for="row in filteredRows"
+          :key="row.id"
+          class="group relative overflow-hidden rounded-lg border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 transition-all hover:border-emerald-300 hover:shadow-md cursor-pointer"
+          @click="openEdit(row)"
+        >
+          <div class="flex items-start gap-3">
+            <UAvatar
+              :alt="row.fullName"
+              size="md"
+              class="ring-2 ring-emerald-100"
             />
-            <UButton
-              icon="i-lucide-trash-2"
-              variant="ghost"
-              color="red"
-              size="xs"
-              class="hover:bg-red-50"
-              aria-label="Delete"
-              @click="confirmRemove(row)"
-            />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-semibold text-slate-900 truncate">{{ row.fullName }}</h3>
+                  <p v-if="row.specialty" class="text-xs text-slate-600 truncate">
+                    {{ row.specialty }}
+                  </p>
+                  <p v-else class="text-xs text-slate-400 italic">No specialty set</p>
+                </div>
+                <UDropdown :items="getRowActions(row)">
+                  <UButton
+                    icon="i-lucide-more-vertical"
+                    variant="ghost"
+                    color="gray"
+                    size="xs"
+                    @click.stop
+                  />
+                </UDropdown>
+              </div>
+
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <UBadge
+                  v-for="code in row.locales.slice(0, 3)"
+                  :key="code"
+                  color="emerald"
+                  variant="soft"
+                  size="xs"
+                  class="uppercase"
+                >
+                  {{ code }}
+                </UBadge>
+                <UBadge
+                  v-if="row.locales.length > 3"
+                  color="gray"
+                  variant="soft"
+                  size="xs"
+                >
+                  +{{ row.locales.length - 3 }}
+                </UBadge>
+              </div>
+
+              <div class="mt-2 flex items-center justify-between">
+                <div class="flex items-center gap-1 text-xs text-slate-500">
+                  <UIcon name="i-lucide-layers" class="h-3 w-3" />
+                  <span>{{ row.services.length }} service{{ row.services.length !== 1 ? 's' : '' }}</span>
+                </div>
+                <span class="text-xs text-slate-400">{{ row.createdAt }}</span>
+              </div>
+            </div>
           </div>
-        </template>
-      </UTable>
+          
+          <!-- Hover indicator -->
+          <div class="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-300 group-hover:w-full"></div>
+        </div>
+      </div>
     </UCard>
 
-    <UModal v-model="deleteOpen" :ui="deleteModalUi">
-      <UCard class="border-0 shadow-card">
+    <!-- Delete Confirmation Modal -->
+    <UModal v-model="deleteOpen">
+      <UCard>
         <template #header>
-          <div>
-            <p class="text-sm font-medium text-red-600">Delete doctor</p>
-            <h3 class="text-xl font-semibold text-slate-900">This action cannot be reversed</h3>
-            <p class="mt-1 text-sm text-slate-500">
+          <div class="flex items-start gap-2.5">
+            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-600">
+              <UIcon name="i-lucide-trash-2" class="h-4 w-4" />
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-slate-900">Delete Doctor</h3>
+              <p class="mt-0.5 text-xs text-slate-600">This action cannot be undone</p>
+            </div>
+          </div>
+        </template>
+
+        <div class="space-y-3">
+          <p class="text-xs text-slate-700">
+            Are you sure you want to delete <strong>{{ deleteTarget?.fullName }}</strong>?
+          </p>
+          <div class="rounded-lg bg-red-50 p-3 border border-red-200">
+            <p class="text-xs text-red-800">
+              <UIcon name="i-lucide-alert-triangle" class="h-3.5 w-3.5 inline" />
               Removing a doctor disconnects them from all services and hides them from bookings.
             </p>
           </div>
-        </template>
-        <p class="text-sm text-slate-600">
-          Are you sure you want to delete <strong>{{ deleteTarget?.fullName }}</strong>?
-        </p>
-        <div class="mt-6 flex justify-end gap-3">
-          <UButton variant="ghost" color="gray" :disabled="deleting" @click="deleteOpen = false">
-            Cancel
-          </UButton>
-          <UButton color="red" :loading="deleting" @click="handleDelete">
-            Delete
-          </UButton>
         </div>
+
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton variant="ghost" color="gray" size="sm" :disabled="deleting" @click="deleteOpen = false">
+              Cancel
+            </UButton>
+            <UButton color="red" size="sm" :loading="deleting" @click="handleDelete">
+              Delete Doctor
+            </UButton>
+          </div>
+        </template>
       </UCard>
     </UModal>
   </div>
@@ -167,12 +249,13 @@
 <script setup lang="ts">
 import type { DoctorAdmin } from "@/types/doctors";
 
-const toast = useToast();
-const { fetcher, request } = useAdminApi();
-
 useHead({
   title: "Doctors – Clinic Admin"
 });
+
+const toast = useEnhancedToast();
+const { fetcher, request } = useAdminApi();
+const router = useRouter();
 
 const { data, pending, refresh } = await useAsyncData("admin-doctors", () =>
   fetcher<DoctorAdmin[]>("/doctors", [])
@@ -186,12 +269,12 @@ const uniqueSpecialties = computed(() => {
       .map(doctor => doctor.specialty?.trim())
       .filter((value): value is string => Boolean(value))
   );
-  return specialties.size.toString();
+  return specialties.size;
 });
 
 const uniqueLanguages = computed(() => {
   const codes = new Set(doctors.value.flatMap(doctor => doctor.locales ?? []));
-  return codes.size.toString();
+  return codes.size;
 });
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
@@ -222,22 +305,9 @@ const filteredRows = computed(() => {
   );
 });
 
-const columns = [
-  { key: "fullName", label: "Doctor", sortable: true },
-  { key: "locales", label: "Languages", class: "max-w-xs" },
-  { key: "services", label: "Services", class: "max-w-md" },
-  { key: "createdAt", label: "Created" },
-  { key: "actions", label: "", class: "w-24 text-right" }
-];
-
 const deleteOpen = ref(false);
 const deleting = ref(false);
-const deleteModalUi = {
-  container: "flex min-h-full items-center justify-center text-center"
-};
-
 const deleteTarget = ref<DoctorAdmin | null>(null);
-const router = useRouter();
 
 function openCreate() {
   router.push("/doctors/new");
@@ -252,6 +322,31 @@ function confirmRemove(row: DoctorAdmin) {
   deleteOpen.value = true;
 }
 
+function getRowActions(row: DoctorAdmin) {
+  return [
+    [
+      {
+        label: "Edit",
+        icon: "i-lucide-pencil",
+        click: () => openEdit(row)
+      },
+      {
+        label: "View Schedule",
+        icon: "i-lucide-calendar",
+        click: () => openEdit(row)
+      }
+    ],
+    [
+      {
+        label: "Delete",
+        icon: "i-lucide-trash-2",
+        click: () => confirmRemove(row),
+        class: "text-red-600"
+      }
+    ]
+  ];
+}
+
 async function handleDelete() {
   if (!deleteTarget.value) return;
   deleting.value = true;
@@ -259,15 +354,14 @@ async function handleDelete() {
     await request(`/doctors/${deleteTarget.value.id}`, {
       method: "DELETE"
     });
-    toast.add({ title: "Doctor deleted" });
+    toast.deleted("Doctor");
     deleteOpen.value = false;
     deleteTarget.value = null;
     await refresh();
   } catch (error: any) {
-    toast.add({
+    toast.error({
       title: "Unable to delete doctor",
-      description: error?.data?.message ?? error?.message ?? "Unexpected error",
-      color: "red"
+      error
     });
   } finally {
     deleting.value = false;

@@ -1,5 +1,10 @@
+import defaultColors from "tailwindcss/colors";
 import tailwindConfig from "../../tailwind.config.mjs";
 
-const colors = tailwindConfig?.theme?.colors ?? {};
+const mergedColors = {
+  ...defaultColors,
+  ...(tailwindConfig?.theme?.colors ?? {}),
+  ...(tailwindConfig?.theme?.extend?.colors ?? {})
+};
 
-export default colors;
+export default mergedColors;

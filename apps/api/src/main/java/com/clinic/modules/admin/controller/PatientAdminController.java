@@ -6,6 +6,10 @@ import com.clinic.modules.admin.dto.PatientAdminResponse;
 import com.clinic.modules.admin.dto.PatientUpsertRequest;
 import com.clinic.modules.admin.service.PatientAdminService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,14 +28,28 @@ public class PatientAdminController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PatientAdminResponse>>> listPatients() {
-        List<PatientAdminResponse> patients = patientAdminService.listPatients();
+    public ResponseEntity<ApiResponse<Page<PatientAdminResponse>>> listPatients(
+            @RequestParam(name = "page", required = false, defaultValue = "0") int page,
+            @RequestParam(name = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(name = "sort", required = false, defaultValue = "lastName") String sortBy,
+            @RequestParam(name = "direction", required = false, defaultValue = "ASC") String direction) {
+
+        // Create pageable with sorting
+        Sort.Direction sortDirection = "DESC".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+
+        Page<PatientAdminResponse> patients = patientAdminService.listPatients(pageable);
         return ResponseEntity.ok(
                 ApiResponseFactory.success(
                         "PATIENTS_LISTED",
                         "Patients fetched successfully.",
                         patients,
-                        Map.of("count", patients.size()),
+                        Map.of(
+                            "totalElements", patients.getTotalElements(),
+                            "totalPages", patients.getTotalPages(),
+                            "currentPage", patients.getNumber(),
+                            "pageSize", patients.getSize()
+                        ),
                         null
                 )
         );

@@ -83,7 +83,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/public/services/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/doctors/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/public/availability").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/public/book").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/public/bookings").permitAll()
                         .requestMatchers("/api/public/auth/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)

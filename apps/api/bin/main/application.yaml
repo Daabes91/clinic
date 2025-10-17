@@ -4,9 +4,9 @@ spring:
   application:
     name: clinic-api
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/clinic}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -34,9 +34,9 @@ security:
       ttl: PT30M
   cors:
     public-origins:
-      - ${PUBLIC_APP_ORIGIN:http://localhost:3000}
+      - ${PUBLIC_APP_ORIGIN:http://localhost:3001}
     admin-origins:
-      - ${ADMIN_APP_ORIGIN:http://localhost:3001}
+      - ${ADMIN_APP_ORIGIN:http://localhost:3000}
   rate-limiting:
     public-auth:
       capacity: ${RATE_LIMIT_PUBLIC_AUTH_CAPACITY:5}

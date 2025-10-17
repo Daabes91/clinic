@@ -2,6 +2,7 @@ import type { AuthTokensResponse, StaffLoginRequest } from "@/types/auth";
 
 const ACCESS_COOKIE = "admin_access_token";
 const REFRESH_COOKIE = "admin_refresh_token";
+const REFRESH_LEAD_TIME = 60_000;
 
 export function useAuth() {
   const config = useRuntimeConfig();
@@ -25,6 +26,8 @@ export function useAuth() {
   const userEmail = useState<string | null>("auth.userEmail", () => null);
   const userName = useState<string | null>("auth.userName", () => null);
   const userRole = useState<string | null>("auth.userRole", () => null);
+  let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
+  let refreshPromise: Promise<void> | null = null;
 
   hydrateUserFromToken(accessToken.value);
 
@@ -55,22 +58,32 @@ export function useAuth() {
   }
 
   async function refresh() {
+    if (refreshPromise) {
+      return refreshPromise;
+    }
+
     if (!refreshTokenCookie.value) {
       clearAuth();
       throw new Error("Missing refresh token");
     }
 
-    try {
-      const response = await $fetch<AuthTokensResponse>("/auth/refresh", {
-        baseURL: apiBase,
-        method: "POST",
-        body: { refreshToken: refreshTokenCookie.value }
-      });
-      persistTokens(response);
-    } catch (error) {
-      clearAuth();
-      throw error;
-    }
+    refreshPromise = (async () => {
+      try {
+        const response = await $fetch<AuthTokensResponse>("/auth/refresh", {
+          baseURL: apiBase,
+          method: "POST",
+          body: { refreshToken: refreshTokenCookie.value }
+        });
+        persistTokens(response);
+      } catch (error) {
+        clearAuth();
+        throw error;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+
+    return refreshPromise;
   }
 
   async function logout() {
@@ -99,6 +112,7 @@ export function useAuth() {
       refreshTokenCookie.maxAge = seconds;
     }
     hydrateUserFromToken(tokens.accessToken);
+    scheduleTokenRefresh();
   }
 
   async function fetchProfile() {
@@ -115,7 +129,35 @@ export function useAuth() {
     }
   }
 
+  function cancelScheduledRefresh() {
+    if (refreshTimeout) {
+      clearTimeout(refreshTimeout);
+      refreshTimeout = null;
+    }
+  }
+
+  function scheduleTokenRefresh() {
+    if (import.meta.server) {
+      return;
+    }
+    cancelScheduledRefresh();
+    if (!accessTokenExpiresAt.value) {
+      return;
+    }
+
+    const delay = accessTokenExpiresAt.value - Date.now() - REFRESH_LEAD_TIME;
+    if (delay <= 0) {
+      refresh().catch(() => undefined);
+      return;
+    }
+
+    refreshTimeout = setTimeout(() => {
+      refresh().catch(() => undefined);
+    }, delay);
+  }
+
   function clearAuth() {
+    cancelScheduledRefresh();
     accessToken.value = null;
     accessTokenCookie.value = null;
     accessTokenExpiresAt.value = null;
@@ -137,6 +179,10 @@ export function useAuth() {
       userName.value = payload.name ?? null;
       const roles = Array.isArray(payload.roles) ? payload.roles : [];
       userRole.value = roles[0]?.replace("ROLE_", "") ?? null;
+      if (typeof payload.exp === "number") {
+        accessTokenExpiresAt.value = payload.exp * 1000;
+        scheduleTokenRefresh();
+      }
     } catch {
       // ignore parsing errors
     }

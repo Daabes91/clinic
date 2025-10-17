@@ -56,20 +56,11 @@
       "@nuxt/devtools": [
         "../../../node_modules/.pnpm/@nuxt+devtools@2.6.5_vite@7.1.10_vue@3.5.22/node_modules/@nuxt/devtools"
       ],
-      "vue": [
-        "../../../node_modules/.pnpm/vue@3.5.22/node_modules/vue"
-      ],
       "@vue/runtime-core": [
         "../../../node_modules/.pnpm/@vue+runtime-core@3.5.22/node_modules/@vue/runtime-core"
       ],
       "@vue/compiler-sfc": [
         "../../../node_modules/.pnpm/@vue+compiler-sfc@3.5.22/node_modules/@vue/compiler-sfc"
-      ],
-      "vue-router": [
-        "../../../node_modules/.pnpm/vue-router@4.6.0_vue@3.5.22/node_modules/vue-router"
-      ],
-      "vue-router/auto-routes": [
-        "../../../node_modules/.pnpm/vue-router@4.6.0_vue@3.5.22/node_modules/vue-router/vue-router-auto-routes"
       ],
       "unplugin-vue-router/client": [
         "../../../node_modules/.pnpm/unplugin-vue-router@0.15.0_@vue+compiler-sfc@3.5.22_vue-router@4.6.0_vue@3.5.22/node_modules/unplugin-vue-router/client"

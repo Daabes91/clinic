@@ -33,6 +33,7 @@ export { defineLazyHydrationComponent } from '#app/composables/lazy-hydration';
 export { useAdminApi } from '../composables/useAdminApi';
 export { useAuth } from '../composables/useAuth';
 export { useAuthorizedFetch } from '../composables/useAuthorizedFetch';
+export { useEnhancedToast } from '../composables/useEnhancedToast';
 export { ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../../../node_modules/.pnpm/@nuxt+ui@2.22.3_vite@7.1.10_vue@3.5.22_yup@1.7.1/node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d';
 export { defineShortcuts } from '../../../node_modules/.pnpm/@nuxt+ui@2.22.3_vite@7.1.10_vue@3.5.22_yup@1.7.1/node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts';
 export { useProvideButtonGroup, useInjectButtonGroup } from '../../../node_modules/.pnpm/@nuxt+ui@2.22.3_vite@7.1.10_vue@3.5.22_yup@1.7.1/node_modules/@nuxt/ui/dist/runtime/composables/useButtonGroup';

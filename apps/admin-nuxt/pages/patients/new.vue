@@ -1,51 +1,66 @@
 <template>
-  <div class="mx-auto max-w-3xl space-y-6">
-    <header class="space-y-2">
-      <UBreadcrumb
-        :links="[
-          { label: 'Patients', to: '/patients' },
-          { label: 'New patient' }
-        ]"
-      />
-      <div class="flex flex-wrap items-end justify-between gap-4">
-        <div class="space-y-1.5">
-          <p class="text-sm font-medium text-blue-600">Create patient</p>
-          <h1 class="text-3xl font-semibold text-slate-900">Add a new patient</h1>
-          <p class="text-sm text-slate-500">
-            Store accurate contact details to simplify booking follow-ups and reminders.
-          </p>
+  <div class="space-y-8">
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-600 via-blue-600 to-indigo-700 p-8 text-white shadow-xl">
+      <div class="absolute inset-y-0 right-0 w-1/2 rounded-full bg-white/10 blur-3xl"></div>
+      <div class="relative space-y-6">
+        <UBreadcrumb
+          :links="[
+            { label: 'Patients', to: '/patients' },
+            { label: 'New patient' }
+          ]"
+          class="text-sky-100"
+        />
+        <div class="flex flex-wrap items-end justify-between gap-4">
+          <div class="space-y-2">
+            <UBadge color="white" variant="soft" size="md" class="text-sky-700">
+              <UIcon name="i-lucide-user-round-plus" class="h-3.5 w-3.5" />
+              Create Patient
+            </UBadge>
+            <h1 class="text-3xl font-bold lg:text-4xl">Add a new patient</h1>
+            <p class="max-w-xl text-sky-100">
+              Capture accurate contact details so the care team can reach patients quickly for confirmations and follow-ups.
+            </p>
+          </div>
+          <UButton variant="ghost" color="white" class="hover:bg-white/20" @click="router.push('/patients')">
+            Cancel
+          </UButton>
         </div>
-        <UButton variant="ghost" color="gray" @click="router.push('/patients')">
-          Cancel
-        </UButton>
       </div>
-    </header>
+    </div>
 
-    <UCard class="shadow-card">
-      <form class="space-y-6" @submit.prevent="handleSave">
-        <div class="grid gap-5 md:grid-cols-2">
-          <UFormGroup label="First name" required>
-            <UInput v-model="form.firstName" placeholder="Layla" size="lg" />
-          </UFormGroup>
-          <UFormGroup label="Last name" required>
-            <UInput v-model="form.lastName" placeholder="Al-Fayed" size="lg" />
-          </UFormGroup>
+    <UCard class="mx-auto max-w-3xl shadow-card">
+      <form class="space-y-8" @submit.prevent="handleSave">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Primary details</h2>
+          <p class="mt-1 text-sm text-slate-500">These fields help staff greet and verify the patient correctly.</p>
+          <div class="mt-6 grid gap-5 md:grid-cols-2">
+            <UFormGroup label="First name" required>
+              <UInput v-model="form.firstName" placeholder="Layla" size="lg" />
+            </UFormGroup>
+            <UFormGroup label="Last name" required>
+              <UInput v-model="form.lastName" placeholder="Al-Fayed" size="lg" />
+            </UFormGroup>
+          </div>
         </div>
 
-        <div class="grid gap-5 md:grid-cols-2">
-          <UFormGroup label="Email address">
-            <UInput v-model="form.email" placeholder="layla@example.com" size="lg" />
-          </UFormGroup>
-          <UFormGroup label="Phone number">
-            <UInput v-model="form.phone" placeholder="+971 50 000 0000" size="lg" />
-          </UFormGroup>
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Contact information</h2>
+          <p class="mt-1 text-sm text-slate-500">Reachable details keep reminders and confirmations on track.</p>
+          <div class="mt-6 grid gap-5 md:grid-cols-2">
+            <UFormGroup label="Email address">
+              <UInput v-model="form.email" placeholder="layla@example.com" size="lg" />
+            </UFormGroup>
+            <UFormGroup label="Phone number">
+              <UInput v-model="form.phone" placeholder="+971 50 000 0000" size="lg" />
+            </UFormGroup>
+          </div>
         </div>
 
         <div class="flex justify-end gap-3">
           <UButton type="button" variant="ghost" color="gray" :disabled="saving" @click="router.push('/patients')">
             Cancel
           </UButton>
-          <UButton type="submit" color="emerald" :loading="saving">
+          <UButton type="submit" color="violet" :loading="saving">
             Create patient
           </UButton>
         </div>

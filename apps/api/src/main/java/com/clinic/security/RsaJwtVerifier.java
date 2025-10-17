@@ -39,11 +39,15 @@ public class RsaJwtVerifier implements JwtVerifier {
             SignedJWT signedJWT = SignedJWT.parse(token);
             String rawKey = tokenConfig.publicKey();
             boolean isStaffConfig = tokenConfig == securityProperties.jwt().staff();
+            boolean isPatientConfig = tokenConfig == securityProperties.jwt().patient();
             if (log.isDebugEnabled()) {
                 log.debug("Token config audience: '{}' (staff config: {})", tokenConfig.audience(), isStaffConfig);
             }
             if (!StringUtils.hasText(rawKey) && isStaffConfig) {
                 log.debug("Staff public key missing from configuration; falling back to bundled development key");
+                rawKey = "classpath:keys/staff_public.pem";
+            } else if (!StringUtils.hasText(rawKey) && isPatientConfig) {
+                log.debug("Patient public key missing from configuration; falling back to bundled development key");
                 rawKey = "classpath:keys/staff_public.pem";
             }
             RSAKey rsaKey = resolveKey(rawKey);

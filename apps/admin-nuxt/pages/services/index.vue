@@ -1,150 +1,296 @@
 <template>
-  <div class="space-y-10">
-    <header class="flex flex-wrap items-end justify-between gap-6 rounded-4xl bg-gradient-to-br from-emerald-600 via-emerald-500 to-emerald-400 px-10 py-12 text-white shadow-2xl">
-      <div class="space-y-4">
-        <UBadge color="white" variant="soft" class="text-emerald-900">Catalogue</UBadge>
-        <div>
-          <h1 class="text-4xl font-semibold tracking-tight">Manage services</h1>
-          <p class="text-sm text-white/80">
-            Keep the clinic offering fresh. Update names, localized summaries, and curate what appears on the public site.
-          </p>
-        </div>
-        <div class="grid gap-4 sm:grid-cols-3">
-          <MetricCard
-            title="Total services"
-            :metric="services.length.toString()"
-            change="Live"
-            description="Currently visible in booking flow"
-          />
-          <MetricCard
-            title="Linked doctors"
-            :metric="totalDoctors.toString()"
-            change="Across catalogue"
-            description="Unique doctors attached to services"
-          />
-          <MetricCard
-            title="Recently updated"
-            :metric="recentlyUpdated"
-            change="Past 30 days"
-            description="Services refreshed this month"
-          />
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <UButton variant="ghost" color="white" :loading="pending" @click="refresh">
-          Refresh
-        </UButton>
-        <UButton icon="i-lucide-plus" color="white" class="text-emerald-700" @click="openCreate">
-          Add service
-        </UButton>
-      </div>
-    </header>
+  <div class="space-y-6">
+    <!-- Hero Header -->
+    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-6 text-white shadow-lg">
+      <div class="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
+      <div class="absolute -bottom-16 -left-12 h-56 w-56 rounded-full bg-emerald-400/20 blur-2xl"></div>
 
-    <UCard class="shadow-card">
-      <template #header>
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p class="text-xs uppercase tracking-widest text-slate-400">Catalogue</p>
-            <h2 class="text-lg font-semibold text-slate-900">Published services</h2>
+      <div class="relative space-y-4">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="space-y-2">
+            <UBadge color="white" variant="soft" size="sm" class="text-emerald-700">
+              <UIcon name="i-lucide-layers" class="h-3 w-3" />
+              Service Catalogue
+            </UBadge>
+            <h1 class="text-2xl font-bold lg:text-3xl">Manage Services</h1>
+            <p class="max-w-2xl text-sm text-emerald-100">
+              Keep the clinic offering fresh. Update names, localized summaries, and curate what appears on the public booking site.
+            </p>
           </div>
-          <UInput
-            v-model="search"
-            icon="i-lucide-search"
-            placeholder="Search services"
-            color="gray"
-            class="w-full max-w-xs"
-          />
+
+          <div class="flex flex-wrap items-center gap-2">
+            <UButton
+              variant="ghost"
+              color="white"
+              :loading="pending"
+              icon="i-lucide-refresh-cw"
+              class="hover:bg-white/20"
+              size="sm"
+              @click="refresh"
+            >
+              Refresh
+            </UButton>
+            <UButton
+              icon="i-lucide-plus"
+              color="white"
+              size="md"
+              class="!text-emerald-700 shadow-md hover:bg-white"
+              @click="openCreate"
+            >
+              <span class="text-emerald-700 font-medium">Add Service</span>
+            </UButton>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid gap-3 sm:grid-cols-3">
+          <div class="group rounded-lg bg-white/10 p-4 backdrop-blur-sm transition-all hover:bg-white/15">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-medium text-emerald-200">Total Services</p>
+                <p class="mt-1 text-2xl font-bold">{{ services.length }}</p>
+                <p class="mt-0.5 text-xs text-emerald-200">Currently visible in booking flow</p>
+              </div>
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+                <UIcon name="i-lucide-layers" class="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="group rounded-lg bg-white/10 p-4 backdrop-blur-sm transition-all hover:bg-white/15">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-medium text-emerald-200">Linked Doctors</p>
+                <p class="mt-1 text-2xl font-bold">{{ totalDoctors }}</p>
+                <p class="mt-0.5 text-xs text-emerald-200">Unique doctors across catalogue</p>
+              </div>
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+                <UIcon name="i-lucide-stethoscope" class="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="group rounded-lg bg-white/10 p-4 backdrop-blur-sm transition-all hover:bg-white/15">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-medium text-emerald-200">Recently Updated</p>
+                <p class="mt-1 text-2xl font-bold">{{ recentlyUpdated }}</p>
+                <p class="mt-0.5 text-xs text-emerald-200">Services refreshed in past 30 days</p>
+              </div>
+              <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+                <UIcon name="i-lucide-clock" class="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="rounded-lg bg-emerald-100 p-1.5">
+          <UIcon name="i-lucide-search" class="h-4 w-4 text-emerald-600" />
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-700">Service Search</p>
+          <p class="text-xs text-slate-500">Find by name, summary, or slug</p>
+        </div>
+      </div>
+      <UInput
+        v-model="search"
+        icon="i-lucide-search"
+        placeholder="Search services..."
+        class="w-full max-w-md"
+        size="md"
+      />
+    </div>
+
+    <!-- Services Table -->
+    <UCard class="shadow-card overflow-hidden">
+      <template #header>
+        <div class="flex items-center gap-2.5">
+          <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+            <UIcon name="i-lucide-layers" class="h-4 w-4" />
+          </div>
+          <div>
+            <h2 class="text-base font-semibold text-slate-900">Service Catalogue</h2>
+            <p class="text-xs text-slate-500">
+              {{ services.length }} total services • {{ filteredRows.length }} shown
+            </p>
+          </div>
         </div>
       </template>
 
-      <div v-if="pending && !services.length" class="space-y-4">
-        <USkeleton v-for="i in 5" :key="`skeleton-${i}`" class="h-12 rounded-2xl" />
+      <div v-if="pending && !services.length" class="space-y-2 p-3">
+        <USkeleton v-for="i in 6" :key="`skeleton-${i}`" class="h-20 rounded-lg" />
       </div>
 
-      <div v-else-if="!filteredRows.length" class="rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-16 text-center">
-        <div class="mx-auto max-w-md space-y-4">
-          <UAvatar icon="i-lucide-layers" size="xl" class="mx-auto" color="gray" variant="soft" />
-          <h3 class="text-xl font-semibold text-slate-900">No services found</h3>
-          <p class="text-sm text-slate-500">
-            Add a new treatment or adjust your search filters to see results.
-          </p>
-          <UButton icon="i-lucide-plus" color="emerald" variant="soft" @click="openCreate">
-            Create service
-          </UButton>
+      <div v-else-if="!filteredRows.length" class="py-12 text-center">
+        <div class="mx-auto max-w-md space-y-3">
+          <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50">
+            <UIcon name="i-lucide-layers" class="h-6 w-6 text-emerald-600" />
+          </div>
+          <div class="space-y-1.5">
+            <h3 class="text-lg font-semibold text-slate-900">No services found</h3>
+            <p class="text-xs text-slate-500">
+              {{ search ? 'No results match your search criteria. Try adjusting your search terms.' : 'Add a new treatment or service to get started with the catalogue.' }}
+            </p>
+          </div>
+          <div class="flex justify-center gap-3">
+            <UButton v-if="search" color="gray" variant="outline" @click="search = ''">
+              Clear Search
+            </UButton>
+            <UButton color="emerald" variant="solid" @click="openCreate">
+              <UIcon name="i-lucide-plus" class="h-4 w-4" />
+              Add Service
+            </UButton>
+          </div>
         </div>
       </div>
 
-      <UTable
-        v-else
-        :rows="filteredRows"
-        :columns="columns"
-        :loading="pending"
-        class="rounded-2xl"
-      >
-        <template #name-data="{ row }">
-          <div class="flex flex-col">
-            <span class="font-medium text-slate-900">{{ row.name }}</span>
-            <span v-if="row.secondaryName" class="text-xs text-slate-500">{{ row.secondaryName }}</span>
-          </div>
-        </template>
-        <template #summary-data="{ row }">
-          <p class="text-sm text-slate-600 line-clamp-2">{{ row.summary }}</p>
-        </template>
-        <template #slug-data="{ row }">
-          <code class="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">{{ row.slug }}</code>
-        </template>
-        <template #doctorCount-data="{ row }">
-          <UBadge color="emerald" variant="soft">{{ row.doctorCount }}</UBadge>
-        </template>
-        <template #createdAt-data="{ row }">
-          <span class="text-xs text-slate-500">{{ row.createdAt }}</span>
-        </template>
-        <template #actions-data="{ row }">
-          <div class="flex justify-end gap-2">
-            <UButton
-              icon="i-lucide-pencil"
-              variant="ghost"
-              color="gray"
-              size="xs"
-              class="hover:bg-emerald-50"
-              aria-label="Edit"
-              @click="openEdit(row)"
-            />
-            <UButton
-              icon="i-lucide-trash-2"
-              variant="ghost"
-              color="red"
-              size="xs"
-              class="hover:bg-red-50"
-              aria-label="Delete"
-              @click="confirmRemove(row)"
-            />
-          </div>
-        </template>
-      </UTable>
+      <div v-else class="overflow-x-auto">
+        <UTable
+          :rows="filteredRows"
+          :columns="columns"
+          :loading="pending"
+          :ui="{
+            wrapper: 'min-w-full',
+            th: {
+              base: '!text-emerald-900 !font-semibold !bg-emerald-200',
+              padding: 'px-3 py-3',
+              color: 'text-emerald-900'
+            },
+            tbody: 'divide-y divide-slate-100',
+            tr: {
+              base: 'hover:bg-emerald-50/50 transition-colors'
+            },
+            td: {
+              padding: 'px-3 py-3'
+            }
+          }"
+        >
+          <template #name-data="{ row }">
+            <div class="flex items-center gap-2.5">
+              <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 ring-2 ring-emerald-100">
+                <UIcon name="i-lucide-briefcase-medical" class="h-4 w-4 text-emerald-600" />
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-slate-900">{{ row.name }}</p>
+                <p v-if="row.secondaryName" class="text-xs text-slate-500 mt-0.5">{{ row.secondaryName }}</p>
+              </div>
+            </div>
+          </template>
+
+          <template #summary-data="{ row }">
+            <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">{{ row.summary }}</p>
+          </template>
+
+          <template #slug-data="{ row }">
+            <div class="flex items-center gap-1.5">
+              <div class="flex h-5 w-5 items-center justify-center rounded bg-slate-100">
+                <UIcon name="i-lucide-hash" class="h-3 w-3 text-slate-500" />
+              </div>
+              <code class="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-700">{{ row.slug }}</code>
+            </div>
+          </template>
+
+          <template #doctorCount-data="{ row }">
+            <div class="flex items-center gap-1.5">
+              <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50">
+                <UIcon name="i-lucide-users" class="h-3.5 w-3.5 text-emerald-600" />
+              </div>
+              <span class="text-xs font-semibold text-slate-900">{{ row.doctorCount }}</span>
+            </div>
+          </template>
+
+          <template #createdAt-data="{ row }">
+            <div class="flex items-center gap-1.5">
+              <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50">
+                <UIcon name="i-lucide-calendar-plus" class="h-3.5 w-3.5 text-violet-600" />
+              </div>
+              <span class="text-xs font-medium text-slate-700">{{ row.createdAt }}</span>
+            </div>
+          </template>
+
+          <template #actions-data="{ row }">
+            <div class="flex justify-end gap-1.5">
+              <UTooltip text="Edit Service">
+                <button
+                  @click.stop="openEdit(row)"
+                  class="group relative flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition-all hover:bg-emerald-500 hover:text-white hover:shadow-md hover:shadow-emerald-500/30"
+                >
+                  <UIcon
+                    name="i-lucide-pencil"
+                    class="h-3.5 w-3.5 transition-transform group-hover:scale-110"
+                  />
+                </button>
+              </UTooltip>
+
+              <UTooltip text="Delete Service">
+                <button
+                  @click.stop="confirmRemove(row)"
+                  class="group relative flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600 transition-all hover:bg-red-500 hover:text-white hover:shadow-md hover:shadow-red-500/30"
+                >
+                  <UIcon
+                    name="i-lucide-trash-2"
+                    class="h-3.5 w-3.5 transition-transform group-hover:scale-110"
+                  />
+                </button>
+              </UTooltip>
+            </div>
+          </template>
+        </UTable>
+      </div>
     </UCard>
 
-    <UModal v-model="deleteOpen" :ui="deleteModalUi">
-      <UCard class="border-0 shadow-card">
+    <!-- Delete Confirmation Modal -->
+    <UModal v-model="deleteOpen" :ui="{ width: 'sm:max-w-md' }">
+      <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100' }">
         <template #header>
-          <div>
-            <p class="text-sm font-medium text-red-600">Delete service</p>
-            <h3 class="text-xl font-semibold text-slate-900">This action cannot be reversed</h3>
-            <p class="mt-1 text-sm text-slate-500">
-              Removing a service immediately hides it from the public site and the booking funnel.
-            </p>
+          <div class="flex items-start gap-2.5">
+            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-red-100">
+              <UIcon name="i-lucide-alert-triangle" class="h-4 w-4 text-red-600" />
+            </div>
+            <div class="flex-1">
+              <h3 class="text-base font-semibold text-slate-900">Delete Service</h3>
+              <p class="mt-0.5 text-xs text-slate-500">
+                This action cannot be undone
+              </p>
+            </div>
           </div>
         </template>
-        <p class="text-sm text-slate-600">
-          Are you sure you want to delete <strong>{{ deleteTarget?.name }}</strong>?
-        </p>
-        <div class="mt-6 flex justify-end gap-3">
-          <UButton variant="ghost" color="gray" :disabled="deleting" @click="deleteOpen = false">
-            Cancel
-          </UButton>
-          <UButton color="red" :loading="deleting" @click="handleDelete">
-            Delete
-          </UButton>
+
+        <div class="space-y-3">
+          <div class="rounded-lg bg-red-50 border border-red-100 p-3">
+            <p class="text-xs text-slate-700">
+              You are about to permanently delete <strong class="font-semibold text-slate-900">{{ deleteTarget?.name }}</strong>.
+            </p>
+            <p class="mt-1.5 text-xs text-slate-600">
+              This will remove the service from the public site and booking funnel immediately.
+            </p>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-1">
+            <UButton
+              variant="outline"
+              color="gray"
+              size="sm"
+              :disabled="deleting"
+              @click="deleteOpen = false"
+            >
+              Cancel
+            </UButton>
+            <UButton
+              color="red"
+              size="sm"
+              :loading="deleting"
+              @click="handleDelete"
+              icon="i-lucide-trash-2"
+            >
+              Delete Service
+            </UButton>
+          </div>
         </div>
       </UCard>
     </UModal>
@@ -172,12 +318,12 @@ const recentlyUpdated = computed(() =>
 const search = ref("");
 
 const columns = [
-  { key: "name", label: "Service", sortable: true },
-  { key: "summary", label: "Summary", class: "max-w-md" },
-  { key: "slug", label: "Slug" },
-  { key: "doctorCount", label: "Doctors" },
-  { key: "createdAt", label: "Created" },
-  { key: "actions", label: "", class: "w-24 text-right" }
+  { key: "name", label: "Service Name", sortable: true, class: "min-w-[250px]" },
+  { key: "summary", label: "Description", class: "min-w-[300px] max-w-md" },
+  { key: "slug", label: "Identifier", class: "w-44" },
+  { key: "doctorCount", label: "Providers", class: "w-32" },
+  { key: "createdAt", label: "Created", class: "w-44" },
+  { key: "actions", label: "Actions", class: "w-32 text-right" }
 ];
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
@@ -212,10 +358,6 @@ const filteredRows = computed(() => {
 
 const deleteOpen = ref(false);
 const deleting = ref(false);
-const deleteModalUi = {
-  container: "flex min-h-full items-center justify-center text-center"
-};
-
 const deleteTarget = ref<{ id: number; name: string } | null>(null);
 const router = useRouter();
 

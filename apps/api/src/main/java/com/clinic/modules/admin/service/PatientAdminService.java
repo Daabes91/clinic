@@ -5,6 +5,8 @@ import com.clinic.modules.admin.dto.PatientUpsertRequest;
 import com.clinic.modules.core.appointment.AppointmentRepository;
 import com.clinic.modules.core.patient.PatientEntity;
 import com.clinic.modules.core.patient.PatientRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,12 +30,9 @@ public class PatientAdminService {
     }
 
     @Transactional(readOnly = true)
-    public List<PatientAdminResponse> listPatients() {
-        Sort sort = Sort.by("lastName").ascending().and(Sort.by("firstName").ascending());
-        return patientRepository.findAll(sort)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    public Page<PatientAdminResponse> listPatients(Pageable pageable) {
+        return patientRepository.findAll(pageable)
+                .map(this::toResponse);
     }
 
     @Transactional(readOnly = true)

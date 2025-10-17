@@ -35,6 +35,10 @@ public class AppointmentEntity {
     @Column(nullable = false, length = 32)
     private AppointmentStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "booking_mode", nullable = false, length = 32)
+    private AppointmentMode bookingMode = AppointmentMode.CLINIC_VISIT;
+
     @Column
     private String notes;
 
@@ -49,12 +53,14 @@ public class AppointmentEntity {
                              ClinicServiceEntity service,
                              Instant scheduledAt,
                              AppointmentStatus status,
+                             AppointmentMode bookingMode,
                              String notes) {
         this.patient = patient;
         this.doctor = doctor;
         this.service = service;
         this.scheduledAt = scheduledAt;
         this.status = status;
+        this.bookingMode = bookingMode == null ? AppointmentMode.CLINIC_VISIT : bookingMode;
         this.notes = notes;
     }
 
@@ -99,12 +105,20 @@ public class AppointmentEntity {
                               DoctorEntity doctor,
                               ClinicServiceEntity service,
                               Instant scheduledAt,
+                              AppointmentMode bookingMode,
                               String notes) {
         this.patient = patient;
         this.doctor = doctor;
         this.service = service;
         this.scheduledAt = scheduledAt;
+        if (bookingMode != null) {
+            this.bookingMode = bookingMode;
+        }
         this.notes = notes;
+    }
+
+    public AppointmentMode getBookingMode() {
+        return bookingMode;
     }
 
     public Instant getCreatedAt() {

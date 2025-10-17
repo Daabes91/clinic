@@ -5,6 +5,7 @@ export type AppointmentAdmin = {
   serviceName: string;
   scheduledAt: string;
   status: string;
+  bookingMode: string;
 };
 
 export type AppointmentAdminDetail = {
@@ -13,6 +14,7 @@ export type AppointmentAdminDetail = {
   doctor: { id: number; name: string } | null;
   service: { id: number; name: string } | null;
   status: string;
+  bookingMode: string;
   scheduledAt: string | null;
   createdAt: string | null;
   notes: string | null;

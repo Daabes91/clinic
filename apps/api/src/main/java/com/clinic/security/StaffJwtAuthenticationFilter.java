@@ -32,8 +32,14 @@ public class StaffJwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return !path.startsWith("/api/admin/")
-                || path.equals("/api/admin/auth/login");
+        if (!path.startsWith("/api/admin/")) {
+            return true;
+        }
+
+        // Skip authentication for public auth endpoints only
+        return path.equals("/api/admin/auth/login")
+            || path.equals("/api/admin/auth/logout")
+            || path.equals("/api/admin/auth/refresh");
     }
 
     @Override

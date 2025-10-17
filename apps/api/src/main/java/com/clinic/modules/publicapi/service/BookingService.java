@@ -1,12 +1,14 @@
 package com.clinic.modules.publicapi.service;
 
 import com.clinic.modules.core.appointment.AppointmentEntity;
+import com.clinic.modules.core.appointment.AppointmentMode;
 import com.clinic.modules.core.appointment.AppointmentRepository;
 import com.clinic.modules.core.appointment.AppointmentStatus;
 import com.clinic.modules.core.doctor.DoctorAvailabilityEntity;
 import com.clinic.modules.core.doctor.DoctorAvailabilityRepository;
 import com.clinic.modules.core.doctor.DoctorEntity;
 import com.clinic.modules.core.doctor.DoctorRepository;
+import com.clinic.modules.core.patient.PatientContactUtils;
 import com.clinic.modules.core.patient.PatientEntity;
 import com.clinic.modules.core.patient.PatientRepository;
 import com.clinic.modules.core.service.ClinicServiceEntity;
@@ -45,7 +47,7 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse createBooking(BookingRequest request) {
+    public BookingResponse createBooking(BookingRequest request, Long authenticatedPatientId) {
         ClinicServiceEntity service = serviceRepository.findBySlug(request.serviceSlug())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service not found"));
 
@@ -67,13 +69,9 @@ public class BookingService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Selected slot is no longer available");
         }
 
-        PatientEntity patient = patientRepository.findByEmailIgnoreCase(request.email())
-                .orElseGet(() -> patientRepository.save(new PatientEntity(
-                        capitalize(request.firstName()),
-                        capitalize(request.lastName()),
-                        request.email(),
-                        request.phone()
-                )));
+        PatientEntity patient = resolvePatient(request, authenticatedPatientId);
+
+        AppointmentMode bookingMode = parseBookingMode(request.bookingMode());
 
         AppointmentEntity appointment = new AppointmentEntity(
                 patient,
@@ -81,11 +79,56 @@ public class BookingService {
                 service,
                 slotStart,
                 AppointmentStatus.SCHEDULED,
+                bookingMode,
                 request.notes()
         );
         AppointmentEntity saved = appointmentRepository.save(appointment);
 
         return new BookingResponse(saved.getId().toString(), saved.getScheduledAt().toString());
+    }
+
+    private PatientEntity resolvePatient(BookingRequest request, Long authenticatedPatientId) {
+        // If user is authenticated, use their patient record
+        if (authenticatedPatientId != null) {
+            return patientRepository.findById(authenticatedPatientId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Authenticated patient not found"));
+        }
+
+        // Guest booking - require patient details in request
+        if (request.firstName() == null || request.firstName().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "firstName is required for guest bookings");
+        }
+        if (request.lastName() == null || request.lastName().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "lastName is required for guest bookings");
+        }
+        if (request.email() == null || request.email().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email is required for guest bookings");
+        }
+        if (request.phone() == null || request.phone().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "phone is required for guest bookings");
+        }
+
+        String email = normalizeEmailOrThrow(request.email());
+        String phone = normalizePhoneOrThrow(request.phone());
+        String firstName = capitalize(request.firstName());
+        String lastName = capitalize(request.lastName());
+
+        PatientEntity patient = patientRepository.findByEmailIgnoreCase(email)
+                .orElseGet(() -> patientRepository.save(new PatientEntity(
+                        firstName,
+                        lastName,
+                        email,
+                        phone
+                )));
+
+        // Update patient details if they've changed
+        if (patient.getPhone() == null || !patient.getPhone().equals(phone)
+                || !patient.getFirstName().equals(firstName) || !patient.getLastName().equals(lastName)) {
+            patient.updateDetails(firstName, lastName, email, phone);
+            patientRepository.save(patient);
+        }
+
+        return patient;
     }
 
     private DoctorEntity resolveDoctor(BookingRequest request, ClinicServiceEntity service) {
@@ -142,5 +185,29 @@ public class BookingService {
         }
         String trimmed = value.trim().toLowerCase(Locale.ROOT);
         return Character.toUpperCase(trimmed.charAt(0)) + trimmed.substring(1);
+    }
+
+    private String normalizeEmailOrThrow(String email) {
+        try {
+            return PatientContactUtils.normalizeEmail(email);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
+        }
+    }
+
+    private String normalizePhoneOrThrow(String phone) {
+        try {
+            return PatientContactUtils.normalizePhone(phone);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
+        }
+    }
+
+    private AppointmentMode parseBookingMode(String mode) {
+        try {
+            return AppointmentMode.from(mode);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
+        }
     }
 }
